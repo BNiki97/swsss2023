@@ -9,23 +9,15 @@ __email__ = 'bironiki97@gmail.com ; biro.nikolett@wigner.hu'
 from math import factorial
 from math import pi
 
-
 def cos_approx(x, accuracy=10):
     """ This function approximates the cosine-function using Taylor expansion.
     Accuracy (int) tells the number of terms ('n') of the series expansion.
     x (float) is the number of which we calculate the cosine of.
     Returns the cosine of x (float).
     """
-<<<<<<< HEAD
     assert int(accuracy) == accuracy, "accuracy should be an integer!"
     list_for_series = [(-1)**n/factorial(2*n)*(x**(2*n)) for n in range(accuracy)]
     return (sum(list_for_series))
-=======
-    """
-    
-    return 
->>>>>>> 96c453cc0d4b2ff9b2d3923dc2611bb17be576f6
-
 
 
 # Will only run if this is run from command line as opposed to imported
