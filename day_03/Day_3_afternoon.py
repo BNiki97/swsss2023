@@ -39,13 +39,12 @@ print(data_arr)
 """
 TODO: Writing and reading numpy file
 """
-# Save the data_arr variable into a .npy file
+np.save('test_np_save.npy',data_arr)
 
+data_arr_loaded = np.load('test_np_save.npy')
 
-# Load data from a .npy file
-
-
-# Verify that the loaded data matches the initial data
+print(np.equal(data_arr,data_arr_loaded))
+print(data_arr == data_arr_loaded)
 
 #%%
 """
@@ -56,8 +55,12 @@ data_arr2 = np.random.randn(8,1)
 print(data_arr2)
 
 # Save the data_arr and data_arr2 variables into a .npz file
+np.savez('test_np_save.npz',data_arr,data_arr2)
 
 # Load the numpy zip file
+npzipfile = np.load('test_np_save.npz')
+print(npzipfile)
+print(sorted(npzipfile.files))
 
 # Verify that the loaded data matches the initial data
 
@@ -69,32 +72,53 @@ Error and exception
 try:
     # Python will try to execute any code here, and if there is an exception 
     # skip to below 
-    print(np.equal(data_arr,npzfile).all())
+    print(np.equal(data_arr,npzipfile).all())
 except:
     # Execute this code when there is an exception (unable to run code in try)
     print("The codes in try returned an error.")
-    print(np.equal(data_arr,npzfile['arr_0']).all())
+    print(np.equal(data_arr,npzipfile['arr_0']).all())
     
 #%%
 """
 TODO: Error solving 1
 """
 # What is wrong with the following line? 
-np.equal(data_arr,data_arr2)
+try:
+    # Python will try to execute any code here, and if there is an exception 
+    # skip to below 
+    print(np.equal(data_arr,data_arr2))
+except:
+    # Execute this code when there is an exception (unable to run code in try)
+    print("Those two arrays have different shapes, cannot be compared.")
+
 
 #%%
 """
 TODO: Error solving 2
 """
-# What is wrong with the following line? 
-np.equal(data_arr2,npzfile['data_arr2'])
+try:
+    # Python will try to execute any code here, and if there is an exception 
+    # skip to below 
+    print(np.equal(data_arr2,npzipfile['data_arr2']))
+except:
+    # Execute this code when there is an exception (unable to run code in try)
+    print("That is the wrong key.")
+    print(np.equal(data_arr2,npzipfile['arr_1']))
 
 #%%
 """
 TODO: Error solving 3
 """
 # What is wrong with the following line? 
-numpy.equal(data_arr2,npzfile['arr_1'])
+try:
+    # Python will try to execute any code here, and if there is an exception 
+    # skip to below 
+    print(numpy.equal(data_arr2,npzipfile['arr_1']))
+except:
+    # Execute this code when there is an exception (unable to run code in try)
+    print("numpy is input as np")
+    print(np.equal(data_arr2,npzipfile['arr_1']))
+
 
 
 #%%
@@ -106,7 +130,7 @@ Loading data from Matlab
 import numpy as np
 from scipy.io import loadmat
 
-dir_density_Jb2008 = 'Data/JB2008/2002_JB2008_density.mat'
+dir_density_Jb2008 = r"C:\Users\Niki\Documents\GIT\swsss2023\day_03\JB2008\2002_JB2008_density.mat"
 
 # Load Density Data
 try:
@@ -142,7 +166,7 @@ nofLst_JB2008 = localSolarTimes_JB2008.shape[0]
 nofLat_JB2008 = latitudes_JB2008.shape[0]
 
 # We can also impose additional constratints such as forcing the values to be integers.
-time_array_JB2008 = np.linspace(0,8760,5, dtype = int)
+time_array_JB2008 = np.linspace(0,8759,5, dtype = int)
 
 # For the dataset that we will be working with today, you will need to reshape 
 # them to be lst x lat x altitude
@@ -160,6 +184,19 @@ import matplotlib.pyplot as plt
 # Look for data that correspond to an altitude of 400 KM
 alt = 400
 hi = np.where(altitudes_JB2008==alt)
+        
+dens_to_plot = JB2008_dens_reshaped[:,:,hi,0]
+dens_to_plot_reshape = np.reshape(dens_to_plot,(nofLst_JB2008,nofLat_JB2008)).transpose()
+#.squeeze()
+
+fig,ax = plt.subplots()
+ax.contourf(localSolarTimes_JB2008,latitudes_JB2008,dens_to_plot_reshape)
+    
+    #r = np.linspace(0,1)
+    #theta = np.linspace(0,2*pi)
+    #phi = np.linspace(0,2*pi)
+    #newvec = np.transpose(np.mat([r, theta, phi]))
+
 
 
 #%%
@@ -167,6 +204,17 @@ hi = np.where(altitudes_JB2008==alt)
 TODO: Plot the atmospheric density for 300 KM for all time indexes in
       time_array_JB2008
 """
+alt = 300
+hi = np.where(altitudes_JB2008==alt)
+fig, axs = plt.subplots(5,figsize=(15,12))
+for i in range(len(time_array_JB2008)):
+    dens_to_plot = JB2008_dens_reshaped[:,:,hi,i]
+    dens_to_plot_reshape = np.reshape(dens_to_plot,(nofLst_JB2008,nofLat_JB2008)).transpose()
+    heh=axs[i].contourf(localSolarTimes_JB2008,latitudes_JB2008,dens_to_plot_reshape)
+    cbar = fig.colorbar(heh)
+plt.show()
+
+    
 
 #%%
 """
@@ -179,8 +227,15 @@ Can you plot the mean density for each altitude at February 1st, 2002?
 # Note the data is generated at an hourly interval from 00:00 January 1st, 2002
 time_index = 31*24
 dens_data_feb1 = JB2008_dens_reshaped[:,:,:,time_index]
-print('The dimension of the data are as followed 
-      (local solar time,latitude,altitude):', JB2008_dens_feb1.shape)
+print('The dimension of the data are as followed(local solar time,latitude,altitude):', dens_data_feb1.shape)
+data_to_plot_alt = [np.mean(dens_data_feb1[:,:,x]) for x in range(nofAlt_JB2008)]
+fig,ax = plt.subplots()  
+ax.set_yscale('log')
+ax.plot(altitudes_JB2008[:],data_to_plot_alt[:])
+plt.grid()
+plt.show()
+
+
 
 #%%
 """
@@ -192,10 +247,22 @@ field at 310km
 """
 # Import required packages
 import h5py
-loaded_data = h5py.File('Data/TIEGCM/2002_TIEGCM_density.mat')
+loaded_data = h5py.File(r"C:\Users\Niki\Documents\GIT\swsss2023\day_03\TIEGCM\2002_TIEGCM_density.mat")
 
 # This is a HDF5 dataset object, some similarity with a dictionary
 print('Key within dataset:',list(loaded_data.keys()))
+
+tiegcm_dens = (10**np.array(loaded_data['density'])*1000).T # convert from g/cm3 to kg/m3
+altitudes_tiegcm = np.array(loaded_data['altitudes']).flatten()
+latitudes_tiegcm = np.array(loaded_data['latitudes']).flatten()
+localSolarTimes_tiegcm = np.array(loaded_data['localSolarTimes']).flatten()
+nofAlt_tiegcm = altitudes_tiegcm.shape[0]
+nofLst_tiegcm = localSolarTimes_tiegcm.shape[0]
+nofLat_tiegcm = latitudes_tiegcm.shape[0]
+
+# We will be using the same time index as before.
+time_array_tiegcm = time_array_JB2008
+tiegcm_dens_reshaped = np.reshape(tiegcm_dens,(nofLst_tiegcm,nofLat_tiegcm,nofAlt_tiegcm,8760), order='F')
 
 
 #%%
@@ -203,6 +270,17 @@ print('Key within dataset:',list(loaded_data.keys()))
 TODO: Plot the atmospheric density for 310 KM for all time indexes in
       time_array_tiegcm
 """
+
+alt = 310
+hi = np.where(altitudes_tiegcm==alt)
+fig, axs = plt.subplots(5,figsize=(15,12))
+for i in range(len(time_array_tiegcm)):
+    dens_to_plot = tiegcm_dens_reshaped[:,:,hi,i]
+    dens_to_plot_reshape = np.reshape(dens_to_plot,(nofLst_tiegcm,nofLat_tiegcm)).transpose()
+    heh=axs[i].contourf(localSolarTimes_tiegcm,latitudes_tiegcm,dens_to_plot_reshape)
+    cbar = fig.colorbar(heh)
+plt.show()
+
 
 #%%
 """
