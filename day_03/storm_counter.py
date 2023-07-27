@@ -100,10 +100,7 @@ if __name__ == '__main__':  # main code block
     plt.grid()
     plt.legend()
     plt.xticks(rotation=45, ha="right")
-    plt.show()   
-    
-    
-    
+    plt.show()    
     
     start_indices = []
     end_indices = []
@@ -126,8 +123,7 @@ if __name__ == '__main__':  # main code block
                     break
     storm_commencement.append(start_indices[index])
     storm_ending.append(end_indices[-1])
-    
-                
+                   
     index_helper = []
     peaks = []
     for i in range(0,len(storm_commencement)):
@@ -138,8 +134,30 @@ if __name__ == '__main__':  # main code block
             index_helper.append(storm_commencement[i])
     for i in range(len(peaks)):
         peaks[i] = peaks[i] + index_helper[i]
-        
-        
+    
+    fig,ax = plt.subplots()
+    ax.plot(data_dict['time'][:],data_dict['symh'][:],'.', label='dataset')
+    ax.plot(time_selected,symh_selected,'g.',label='measurements below -100 nT')
+    ax.plot(time[peaks], symh[peaks], "rx",label='here is a storm!')
+    ax.set(title="Geomagnetic Storm in 2013 March 17\nNUMBER OF STORMS: {0}".format(len(peaks)))
+    ax.set_xlabel("Date")
+    ax.set_ylabel("SYM-H index")
+    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m-%d"))
+    plt.grid()
+    plt.legend()
+    plt.xticks(rotation=45, ha="right")
+    plt.show() 
+
+"""
+# DISCONTINUED
+    from scipy.signal import find_peaks
+    symh_selected_new = [-x for x in symh_selected]
+    peaks, _ = find_peaks(symh_selected_new, prominence=10)
+    
+    plt.plot(time_selected,symh_selected, '.')
+    plt.plot(time_selected[peaks],symh_selected[peaks],'rx')
+    
+    
     # there are outliners, making a running average
     window_size = 6
     i=0
@@ -185,28 +203,6 @@ if __name__ == '__main__':  # main code block
         peaks.append(temporary_array.index(min(temporary_array)))
     for i in range(len(find_timegaps_new)-1):
         peaks[i] = peaks[i] + find_timegaps_new[i]
-    
-    fig,ax = plt.subplots()
-    ax.plot(data_dict['time'][:],data_dict['symh'][:],'.', label='dataset')
-    ax.plot(time_selected,symh_selected,'g.',label='measurements below -100 nT')
-    ax.plot(time[peaks], symh[peaks], "rx",label='here is a storm!')
-    ax.set(title="Geomagnetic Storm in 2013 March 17\nNUMBER OF STORMS: {0}".format(len(peaks)))
-    ax.set_xlabel("Date")
-    ax.set_ylabel("SYM-H index")
-    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m-%d"))
-    plt.grid()
-    plt.legend()
-    plt.xticks(rotation=45, ha="right")
-    plt.show() 
-
-"""
-# DISCONTINUED
-    from scipy.signal import find_peaks
-    symh_selected_new = [-x for x in symh_selected]
-    peaks, _ = find_peaks(symh_selected_new, prominence=10)
-    
-    plt.plot(time_selected,symh_selected, '.')
-    plt.plot(time_selected[peaks],symh_selected[peaks],'rx')
 """
 
 

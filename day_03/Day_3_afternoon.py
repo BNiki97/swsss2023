@@ -293,7 +293,20 @@ models (JB2008 and TIE-GCM) on the same plot?
 # First identidy the time index that corresponds to  February 1st, 2002. 
 # Note the data is generated at an hourly interval from 00:00 January 1st, 2002
 time_index = 31*24
+dens_data_feb1 = JB2008_dens_reshaped[:,:,:,time_index]
+dens_data_feb2 = tiegcm_dens_reshaped[:,:,:,time_index]
+print('The dimension of the data are as followed(local solar time,latitude,altitude):', dens_data_feb1.shape)
+data_to_plot_alt = [np.mean(dens_data_feb1[:,:,x]) for x in range(nofAlt_JB2008)]
+data_to_plot_alt2 = [np.mean(dens_data_feb2[:,:,x]) for x in range(nofAlt_tiegcm)]
+fig,ax = plt.subplots()  
+ax.set_yscale('log')
+ax.plot(altitudes_JB2008[:],data_to_plot_alt[:], label='JB2008')
+ax.plot(altitudes_tiegcm[:],data_to_plot_alt2[:],'-', label='tiegcm')
+plt.grid()
+plt.legend()
+plt.show()
 
+print(JB2008_dens_reshaped.shape,tiegcm_dens_reshaped.shape)
 
 #%%
 """
@@ -305,9 +318,33 @@ Now, let's us look at how to do data interpolation with scipy
 from scipy import interpolate
 
 # Let's first create some data for interpolation
-x = np.arange(0, 10)
+x = np.arange(0, 10, 3)
 y = np.exp(-x/3.0)
 
+interp_func_1D = interpolate.interp1d(x,y)
+
+xnew = np.arange(0,9,0.1)
+ynew = interp_func_1D(xnew)
+
+interp_func_1D_cub = interpolate.interp1d(x,y,kind='cubic')
+ycubic = interp_func_1D_cub(xnew)
+
+interp_func_1d_quadr = interpolate.interp1d(x,y,kind='quadratic')
+yquad = interp_func_1d_quadr(xnew)
+
+plt.plot(xnew,ynew)
+plt.plot(x,y)
+
+
+fig=plt.subplots(1, figsize=(10,6))
+plt.plot(x,y,'o', xnew, ynew, '*', xnew, ycubic, '--', xnew, yquad, '--', linewidth=2)
+plt.legend(['initial points', 'interpolated linear', 'interpolated cubic', 'interpolated quadratic'], fontsize = 16)
+plt.xlabel('x', fontsize=18)
+plt.ylabel('y', fontsize=18)
+plt.title('1D interpolation', fontsize=18)
+plt.grid()
+plt.tick_params(axis='both',which='major', labelsize=16)
+plt.show()
 
 #%%
 """
@@ -328,6 +365,11 @@ z = np.linspace(7, 9, 33)
 xg, yg ,zg = np.meshgrid(x, y, z, indexing='ij', sparse=True)
 
 sample_data = function_1(xg, yg, zg)
+interpolated_function_1 = RegularGridInterpolator((x,y,z), sample_data)
+
+pts = np.array([[2.1, 6.2, 8.3], [3.3, 5.2, 7.1]])
+print("using interpolation method: ", interpolated_function_1(pts))
+print("from true function: ", function_1(pts[:,0], pts[:,1], pts[:, 2]))
 
 
 #%%
@@ -354,10 +396,44 @@ Use 3D interpolation to evaluate the TIE-GCM density field at 400 KM on
 February 1st, 2002, with the discretized grid used for the JB2008 
 ((nofLst_JB2008,nofLat_JB2008,nofAlt_JB2008).
 """
+time_index = 31*24
+sample_data = tiegcm_dens_reshaped[:,:,:,time_index]
 
+x = localSolarTimes_tiegcm 
+y = latitudes_tiegcm
+z = altitudes_tiegcm # (400)
 
+interpolated_function__tiegcm = RegularGridInterpolator((x,y,z), sample_data, bounds_error=False, fill_value=None)
 
+#ptsx, ptsy, ptsz = np.meshgrid(localSolarTimes_JB2008, latitudes_JB2008, altitudes_JB2008, indexing='ij', sparse=True)
+pts = np.zeros((nofLst_JB2008,nofLat_JB2008))
+for i in range(nofLst_JB2008):
+    for j in range(nofLat_JB2008):
+        pts_index = np.array([localSolarTimes_JB2008[i], latitudes_JB2008[j], 400])
+        pts[i,j] = interpolated_function__tiegcm((pts_index))
 
+"""
+# this works as well!
+xx = localSolarTimes_JB2008
+yy = latitudes_JB2008
+zz = 400
+X, Y, Z = np.meshgrid(xx, yy, zz, indexing='ij')
+interp_to_plot = interpolated_function__tiegcm((X, Y, Z)).reshape(nofLst_JB2008,nofLat_JB2008)
+"""
+
+alt = 400
+hi = np.where(altitudes_JB2008==alt)
+dens_to_plot = JB2008_dens_reshaped[:,:,hi,time_index]
+dens_to_plot_reshape = np.reshape(dens_to_plot,(nofLst_JB2008,nofLat_JB2008))
+fig, axs = plt.subplots(2,figsize=(15,12))
+plt.title(label='400 km data for February 2002', loc="left")
+heh=axs[0].contourf(localSolarTimes_JB2008,latitudes_JB2008,pts.T) # or interp_to_plot.T
+axs[0].set_title('interpolated tiegcm data')
+cbar = fig.colorbar(heh)
+heh2=axs[1].contourf(localSolarTimes_JB2008,latitudes_JB2008,dens_to_plot_reshape.T)
+axs[1].set_title('original jb2008 data')
+cbar = fig.colorbar(heh2)
+plt.show()
 
 #%%
 """
@@ -367,8 +443,16 @@ Now, let's find the difference between both density models and plot out this
 difference in a contour plot.
 """
 
+I_can_make_a_difference = np.zeros((nofLst_JB2008,nofLat_JB2008))
+for i in range(nofLst_JB2008):
+    for j in range(nofLat_JB2008):
+        I_can_make_a_difference[i,j] = pts[i,j] - dens_to_plot_reshape[i,j]
 
-
+fig, axs = plt.subplots(1,figsize=(15,6))
+plt.title(label='difference between original jb2008 data and interpolated tiegcm data')
+heh=axs.contourf(localSolarTimes_JB2008,latitudes_JB2008,I_can_make_a_difference.T) # or interp_to_plot.T
+cbar = fig.colorbar(heh)
+plt.show()
 
 
 #%%
@@ -382,7 +466,14 @@ for this scenario.
 APE = abs(tiegcm_dens-JB2008_dens)/tiegcm_dens
 """
 
+I_can_make_more_difference = np.zeros((nofLst_JB2008,nofLat_JB2008))
+for i in range(nofLst_JB2008):
+    for j in range(nofLat_JB2008):
+        I_can_make_more_difference[i,j] = abs(I_can_make_a_difference[i,j]) / pts[i,j]
 
-
-
+fig, axs = plt.subplots(1,figsize=(15,6))
+plt.title(label='absolute percentage difference between original jb2008 data and interpolated tiegcm data')
+heh=axs.contourf(localSolarTimes_JB2008,latitudes_JB2008,I_can_make_more_difference.T) # or interp_to_plot.T
+cbar = fig.colorbar(heh)
+plt.show()
 
