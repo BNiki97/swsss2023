@@ -11,14 +11,17 @@ import matplotlib.pyplot as plt
 
 def temp_to_dens(n0 = 1e19, alt0 = 100, altn = 500, nPts = 500, r = 6370, m = 28*1.67e-27, k = 1.38e-23,
                  T0 = 200, Tn = 1000):
-    size_of_steps = ((altn-alt0)/nPts)
-    size_of_steps_temp = ((Tn-T0)/nPts)
-    nPtsAr = np.arange(1,nPts+1)
     alt = np.linspace(alt0, altn, nPts)
     T = np.linspace(T0, Tn, nPts)
     g = np.array([3.99e14 / ((r+i)*1000)**2 for i in alt])
-    temp=(T[1:]+T[:-1])/2
-    gravity=(g[1:]+g[:-1])/2
+    temp = []
+    for i in range(nPts-1):
+        temp.append((T[i+1]+T[i])/2)
+    temp = np.array(temp)
+    gravity = []
+    for i in range(nPts-1):
+        gravity.append((g[i+1]+g[i])/2)
+    gravity=np.array(gravity)
     H = k*temp/m/gravity
     n = [n0]
     for h, t_0, t_1, dz in zip(H, T[:-1], T[1:], (alt[1:]-alt[:-1])*1000):

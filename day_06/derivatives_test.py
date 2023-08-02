@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+__author__ = 'Nikolett Biró'
+__email__ = 'bironiki97@gmail.com ; biro.nikolett@wigner.hu'
+
 import numpy as np
 import matplotlib.pyplot as plt
 
