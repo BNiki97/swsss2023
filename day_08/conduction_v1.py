@@ -8,6 +8,10 @@ from tridiagonal import solve_tridiagonal
 # Main code
 # ----------------------------------------------------------------------
 
+# smoother equation - this is what conduction does
+# a weighted average between the two neighboring values
+
+
 if __name__ == "__main__":
 
     dx = 0.25
@@ -19,12 +23,21 @@ if __name__ == "__main__":
     t_upper = 1000.0
 
     nPts = len(x)
+    
+    Q = np.zeros(nPts)
+    bool_1 = np.array([x>3])
+    bool_2 = np.array([x<7])
+    # or: np.logical_and(x>3, x<7)
+    # np.logical_and(x>3, x<7) == (bool_1 & bool_2).squeeze()
+    Q[(bool_1 & bool_2).squeeze()] = 100
+    lambda_var = 100
+    
 
     # set default coefficients for the solver:
-    a = np.zeros(nPts) - 1
-    b = np.zeros(nPts) + 2
-    c = np.zeros(nPts) - 1
-    d = np.zeros(nPts)
+    a = np.zeros(nPts) + 1
+    b = np.zeros(nPts) - 2
+    c = np.zeros(nPts) + 1
+    d = np.zeros(nPts) - Q/lambda_var * dx**2
 
     # boundary conditions (bottom - fixed):
     a[0] = 0
@@ -33,10 +46,10 @@ if __name__ == "__main__":
     d[0] = t_lower
 
     # top - fixed:
-    a[-1] = 0
-    b[-1] = 1
-    c[-1] = 0
-    d[-1] = t_upper
+    a[-1] = 1       # 1     0
+    b[-1] = -1       # -1    1
+    c[-1] = 0       # 0     0
+    d[-1] = 0       # 0     t_upper
 
     # Add a source term:
     
